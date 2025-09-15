@@ -10,16 +10,21 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // This effect handles automatic redirection after a user logs in.
+  // This effect handles automatic redirection after a user logs in or out.
   useEffect(() => {
     // If the user is logged in and they are at the root URL ('/'),
-    // redirect them to the default dashboard page, '/projects'.
+    // redirect them to the default dashboard page.
     if (user && location.pathname === '/') {
       navigate('/projects');
     }
+    // If the user is NOT logged in and they try to access any page
+    // other than the root, redirect them back to the login screen.
+    else if (!user && location.pathname !== '/') {
+      navigate('/');
+    }
   }, [user, navigate, location.pathname]);
 
-  // If there is no user, render the authentication screen. The login page is now the root path "/".
+  // If there is no user, render the authentication screen.
   if (!user) {
     return (
       <>
@@ -29,9 +34,10 @@ function App() {
     );
   }
 
-  // If a user exists, render the main Dashboard layout.
-  // The <Outlet /> is the placeholder that will be filled by the correct page component
-  // based on the current URL (e.g., <ProjectsView /> for '/projects').
+  // If the user is logged in, render the main Dashboard layout.
+  // The <Outlet /> component from react-router-dom will render the
+  // specific child component that matches the current URL
+  // (e.g., <ProjectsView /> when the URL is '/projects').
   return (
     <>
       <Dashboard user={user} onLogout={handleLogout}>

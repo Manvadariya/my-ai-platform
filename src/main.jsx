@@ -21,8 +21,8 @@ import { DataView } from './components/dashboard/DataView';
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />, // App.jsx acts as the root layout component
-    // These "children" routes will be rendered inside the <Outlet /> within App.jsx
+    element: <App />, // App.jsx acts as the root layout
+    // These children routes will be rendered inside App.jsx's <Outlet />
     children: [
       { path: "projects", element: <ProjectsView /> },
       { path: "playground", element: <PlaygroundView /> },
