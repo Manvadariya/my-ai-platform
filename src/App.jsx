@@ -5,26 +5,42 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { Toaster } from './components/ui/sonner';
 import { useAppContext } from './context/AppContext';
 
+// A simple component to show while verifying the user's session
+function LoadingSpinner() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <h2>Loading Application...</h2>
+    </div>
+  );
+}
+
 function App() {
-  const { user, handleAuth, handleLogout } = useAppContext();
+  const { user, handleAuth, handleLogout, isInitializing, loadUserFromToken } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // This effect handles automatic redirection after a user logs in or out.
+  // This effect runs only ONCE when the app starts
   useEffect(() => {
-    // If the user is logged in and they are at the root URL ('/'),
-    // redirect them to the default dashboard page.
+    loadUserFromToken();
+  }, [loadUserFromToken]);
+
+  // This effect handles redirects AFTER the initial loading is done
+  useEffect(() => {
+    if (isInitializing) return; // Do nothing until we know if user is logged in or not
+
     if (user && location.pathname === '/') {
       navigate('/projects');
-    }
-    // If the user is NOT logged in and they try to access any page
-    // other than the root, redirect them back to the login screen.
-    else if (!user && location.pathname !== '/') {
+    } else if (!user && location.pathname !== '/') {
       navigate('/');
     }
-  }, [user, navigate, location.pathname]);
+  }, [user, isInitializing, navigate, location.pathname]);
 
-  // If there is no user, render the authentication screen.
+  // Show a loading screen while we verify the token
+  if (isInitializing) {
+    return <LoadingSpinner />;
+  }
+
+  // If loading is finished and there's still no user, show the AuthScreen
   if (!user) {
     return (
       <>
@@ -33,11 +49,8 @@ function App() {
       </>
     );
   }
-
-  // If the user is logged in, render the main Dashboard layout.
-  // The <Outlet /> component from react-router-dom will render the
-  // specific child component that matches the current URL
-  // (e.g., <ProjectsView /> when the URL is '/projects').
+  
+  // If loading is finished and we have a user, show the Dashboard
   return (
     <>
       <Dashboard user={user} onLogout={handleLogout}>

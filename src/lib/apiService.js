@@ -1,37 +1,18 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 async function request(endpoint, options = {}) {
+  // ... (request function remains the same as before)
   const url = `${API_BASE_URL}${endpoint}`;
   const token = localStorage.getItem('authToken');
-
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
-  if (options.body instanceof FormData) {
-    delete headers['Content-Type'];
-  }
-
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (token) { headers['Authorization'] = `Bearer ${token}`; }
+  if (options.body instanceof FormData) { delete headers['Content-Type']; }
   const config = { ...options, headers };
-
   try {
     const response = await fetch(url, config);
-    // Handle responses that might not have a JSON body (like DELETE)
-    if (response.status === 204) {
-      return null;
-    }
-    
+    if (response.status === 204) return null;
     const responseData = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(responseData.message || `Request failed with status ${response.status}`);
-    }
-    
+    if (!response.ok) throw new Error(responseData.message || `Request failed with status ${response.status}`);
     return responseData;
   } catch (error) {
     console.error(`API Error on ${endpoint}:`, error);
@@ -49,4 +30,29 @@ export const apiService = {
   createProject: (projectData) => request('/projects', { method: 'POST', body: JSON.stringify(projectData) }),
   updateProject: (id, projectData) => request(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(projectData) }),
   deleteProject: (id) => request(`/projects/${id}`, { method: 'DELETE' }),
+
+  // User Profile & Settings
+  getUserProfile: () => request('/users/profile'),
+  updateUserProfile: (profileData) => request('/users/profile', { method: 'PUT', body: JSON.stringify(profileData) }),
+
+  // API Keys
+  getApiKeys: () => request('/keys'),
+  generateApiKey: (keyData) => request('/keys', { method: 'POST', body: JSON.stringify(keyData) }),
+  deleteApiKey: (id) => request(`/keys/${id}`, { method: 'DELETE' }),
+
+  // Billing
+  getSubscription: () => request('/billing/subscription'),
+  updateSubscription: (planData) => request('/billing/subscription', { method: 'PUT', body: JSON.stringify(planData) }),
+
+  // Data Sources (Knowledge Base)
+  getDataSources: () => request('/data'),
+  uploadFile: (formData) => request('/data/upload', { method: 'POST', body: formData }), // Corrected Endpoint
+  deleteDataSource: (id) => request(`/data/${id}`, { method: 'DELETE' }),
+  
+  // Chat (RAG)
+  sendMessageToRAG: (chatData) => request('/chat', { method: 'POST', body: JSON.stringify(chatData) }), // Corrected Endpoint
+  
+  // --- NEW: User Profile ---
+  getProfile: () => request('/users/profile'), 
+
 };

@@ -10,80 +10,107 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { BillingView } from './BillingView';
-import { 
-  User, 
-  Bell, 
-  Shield, 
-  CreditCard, 
-  Key,
-  Lock,
-  Copy,
-  Eye,
-  EyeSlash
-} from '@phosphor-icons/react';
+import { User, Shield, Key, CreditCard, Lock, Copy, Eye, EyeSlash, Trash } from '@phosphor-icons/react'; // <-- CORRECTED LINE
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useAppContext } from '../../context/AppContext';
+import { apiService } from '../../lib/apiService';
 
-export function SettingsView({ user }) {
-  const { settings, setSettings, apiKeys, setApiKeys } = useAppContext();
-  
-  const [profile, setProfile] = useState({
-    name: user.name,
-    email: user.email,
-    company: user.company,
-    bio: ''
-  });
-
-  const [showApiKey, setShowApiKey] = useState(null);
+export function SettingsView() {
+  const { user, setUser } = useAppContext();
   const [activeTab, setActiveTab] = useState('profile');
+  
+  const [profile, setProfile] = useState({ name: '', email: '', company: '' });
+  const [securitySettings, setSecuritySettings] = useState({ twoFactorEnabled: false, sessionTimeout: '24h' });
+  const [apiKeys, setApiKeys] = useState([]);
+  const [showApiKey, setShowApiKey] = useState(null);
 
   useEffect(() => {
-    const highlight = sessionStorage.getItem('highlightSection');
-    if (highlight) {
-      setActiveTab(highlight);
-      sessionStorage.removeItem('highlightSection');
-    }
-  }, []);
-
-  const handleSaveProfile = () => {
-    // Here you would typically also update the global user state
-    // For now, just a toast message
-    toast.success('Profile updated successfully');
-  };
-
-  const handleUpdateSetting = (category, setting, value) => {
-    setSettings(current => ({
-      ...current,
-      [category]: {
-        ...current[category],
-        [setting]: value
+    const fetchProfileData = async () => {
+      if (!user) return; // Don't fetch if user is not loaded yet
+      try {
+        const userData = await apiService.getUserProfile();
+        setUser(userData);
+        setProfile({ name: userData.name, email: userData.email, company: userData.company });
+        setSecuritySettings({ twoFactorEnabled: userData.twoFactorEnabled, sessionTimeout: userData.sessionTimeout });
+      } catch (error) {
+        toast.error('Failed to fetch profile data.');
       }
-    }));
-    toast.success('Settings updated');
-  };
-
-  const copyApiKey = (key) => {
-    navigator.clipboard.writeText(key);
-    toast.success('API key copied to clipboard');
-  };
-
-  const handleChangePassword = () => {
-    toast.info('Change password flow initiated.');
-  };
-
-  const handleGenerateApiKey = () => {
-    const newKey = {
-        id: `key_${Date.now()}`,
-        name: 'New API Key',
-        key: `sk-proj-${Math.random().toString(36).substring(2, 11)}...${Math.random().toString(36).substring(2, 8)}`,
-        created: new Date().toISOString(),
-        lastUsed: new Date().toISOString(),
-        usage: 0
     };
-    setApiKeys(current => [...current, newKey]);
-    toast.success('New API key generated!');
+    fetchProfileData();
+  }, [user?.id, setUser]); // Depend on user.id to refetch if the user changes
+
+  useEffect(() => {
+    if (activeTab === 'api') {
+      const fetchApiKeys = async () => {
+        try {
+          const keys = await apiService.getApiKeys();
+          setApiKeys(keys.map(k => ({ ...k, id: k._id })));
+        } catch (error) {
+          toast.error('Failed to fetch API keys.');
+        }
+      };
+      fetchApiKeys();
+    }
+  }, [activeTab]);
+
+  const handleSaveProfile = async () => {
+    try {
+      const updatedUser = await apiService.updateUserProfile(profile);
+      setUser(prevUser => ({...prevUser, ...updatedUser}));
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error(`Failed to update profile: ${error.message}`);
+    }
   };
+  
+  const handleUpdateSecuritySetting = async (setting, value) => {
+    try {
+      const updatedUser = await apiService.updateUserProfile({ [setting]: value });
+      setUser(prevUser => ({...prevUser, ...updatedUser}));
+      setSecuritySettings(prev => ({ ...prev, [setting]: value }));
+      toast.success('Security setting updated');
+    } catch (error) {
+      toast.error(`Failed to update setting: ${error.message}`);
+    }
+  };
+
+  const handleGenerateApiKey = async () => {
+    try {
+      const response = await apiService.generateApiKey({ name: 'New API Key' });
+      const newKeyObject = { ...response.apiKey, id: response.apiKey._id };
+      
+      setApiKeys(current => [newKeyObject, ...current]);
+
+      toast.success('API Key generated successfully!', {
+        description: 'Copy your new key now. You will not be able to see it again.',
+        action: {
+          label: 'Copy Key',
+          onClick: () => {
+            navigator.clipboard.writeText(newKeyObject.key);
+            toast.success("Key copied to clipboard!");
+          },
+        },
+        duration: 15000, // Increase duration so user has time to copy
+      });
+    } catch (error) {
+       toast.error(`Failed to generate API key: ${error.message}`);
+    }
+  };
+  
+  const handleDeleteApiKey = async (keyId) => {
+    try {
+        await apiService.deleteApiKey(keyId);
+        setApiKeys(current => current.filter(key => key.id !== keyId));
+        toast.success("API Key deleted.");
+    } catch(error) {
+        toast.error(`Failed to delete API key: ${error.message}`);
+    }
+  }
+
+  if (!user) {
+    return <div>Loading settings...</div>; // Or a skeleton loader
+  }
 
   return (
     <div className="space-y-6">
@@ -91,16 +118,13 @@ export function SettingsView({ user }) {
         <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
         <p className="text-muted-foreground">Manage your account preferences and security settings</p>
       </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="profile" className="gap-2"><User size={16} />Profile</TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2"><Bell size={16} />Notifications</TabsTrigger>
           <TabsTrigger value="security" className="gap-2"><Shield size={16} />Security</TabsTrigger>
           <TabsTrigger value="api" className="gap-2"><Key size={16} />API Keys</TabsTrigger>
           <TabsTrigger value="billing" className="gap-2"><CreditCard size={16} />Billing</TabsTrigger>
         </TabsList>
-
         <TabsContent value="profile" className="space-y-4">
           <Card>
             <CardHeader>
@@ -133,64 +157,13 @@ export function SettingsView({ user }) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select value={user.role} disabled>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Developer">Developer</SelectItem>
-                      <SelectItem value="Editor">Editor</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input id="role" value={user.role} disabled />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea id="bio" placeholder="Tell us about yourself..." value={profile.bio} onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))} />
               </div>
               <Button onClick={handleSaveProfile}>Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Choose how you want to be notified about updates</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-                </div>
-                <Switch checked={settings.notifications.email} onCheckedChange={(checked) => handleUpdateSetting('notifications', 'email', checked)} />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Browser Notifications</p>
-                  <p className="text-sm text-muted-foreground">Show desktop notifications</p>
-                </div>
-                <Switch checked={settings.notifications.browser} onCheckedChange={(checked) => handleUpdateSetting('notifications', 'browser', checked)} />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Weekly Reports</p>
-                  <p className="text-sm text-muted-foreground">Get weekly usage summaries</p>
-                </div>
-                <Switch checked={settings.notifications.weekly} onCheckedChange={(checked) => handleUpdateSetting('notifications', 'weekly', checked)} />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Marketing Updates</p>
-                  <p className="text-sm text-muted-foreground">Product updates and feature announcements</p>
-                </div>
-                <Switch checked={settings.notifications.marketing} onCheckedChange={(checked) => handleUpdateSetting('notifications', 'marketing', checked)} />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="security" className="space-y-4">
           <Card>
             <CardHeader>
@@ -201,16 +174,16 @@ export function SettingsView({ user }) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Two-Factor Authentication</p>
-                  <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
+                  <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant={settings.security.twoFactor ? 'default' : 'secondary'}>{settings.security.twoFactor ? 'Enabled' : 'Disabled'}</Badge>
-                  <Switch checked={settings.security.twoFactor} onCheckedChange={(checked) => handleUpdateSetting('security', 'twoFactor', checked)} />
+                  <Badge variant={securitySettings.twoFactorEnabled ? 'default' : 'secondary'}>{securitySettings.twoFactorEnabled ? 'Enabled' : 'Disabled'}</Badge>
+                  <Switch checked={securitySettings.twoFactorEnabled} onCheckedChange={(checked) => handleUpdateSecuritySetting('twoFactorEnabled', checked)} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Session Timeout</Label>
-                <Select value={settings.security.sessionTimeout} onValueChange={(value) => handleUpdateSetting('security', 'sessionTimeout', value)}>
+                <Select value={securitySettings.sessionTimeout} onValueChange={(value) => handleUpdateSecuritySetting('sessionTimeout', value)}>
                   <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1h">1 hour</SelectItem>
@@ -221,43 +194,35 @@ export function SettingsView({ user }) {
                 </Select>
               </div>
               <div className="pt-4 border-t">
-                <Button variant="outline" className="gap-2" onClick={handleChangePassword}><Lock size={16} />Change Password</Button>
+                <Button variant="outline" className="gap-2" onClick={() => toast.info('Password change flow not implemented yet.')}><Lock size={16} />Change Password</Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="api" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>API Keys</CardTitle>
-              <CardDescription>Manage your API keys for accessing the platform</CardDescription>
+              <CardDescription>Manage your API keys for programmatic access</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
                 {apiKeys.map((apiKey) => (
-                  <motion.div key={apiKey.id} className="border rounded-lg p-4" whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+                  <motion.div key={apiKey.id} className="border rounded-lg p-4" whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="font-medium">{apiKey.name}</p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>Created: {new Date(apiKey.created).toLocaleDateString()}</span>
-                          <span>•</span>
-                          <span>Last used: {new Date(apiKey.lastUsed).toLocaleDateString()}</span>
-                          <span>•</span>
-                          <span>{apiKey.usage.toLocaleString()} calls</span>
+                          <span>Created: {new Date(apiKey.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setShowApiKey(showApiKey === apiKey.id ? null : apiKey.id)}>
-                          {showApiKey === apiKey.id ? <EyeSlash size={16} /> : <Eye size={16} />}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => copyApiKey(apiKey.key)}><Copy size={16} /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteApiKey(apiKey.id)} className="text-destructive hover:text-destructive"><Trash size={16}/></Button>
                       </div>
                     </div>
                     <div className="mt-3">
                       <code className="text-sm bg-muted px-2 py-1 rounded font-mono">
-                        {showApiKey === apiKey.id ? apiKey.key : '••••••••••••••••••••••••••••••••'}
+                        {`${apiKey.keyPrefix}........................${apiKey.lastFour}`}
                       </code>
                     </div>
                   </motion.div>
@@ -267,7 +232,6 @@ export function SettingsView({ user }) {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="billing" className="space-y-4">
           <BillingView user={user} />
         </TabsContent>
