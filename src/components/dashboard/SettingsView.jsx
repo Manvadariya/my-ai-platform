@@ -19,7 +19,7 @@ import { apiService } from '../../lib/apiService';
 export function SettingsView() {
   const { user, setUser } = useAppContext();
   const [activeTab, setActiveTab] = useState('profile');
-  
+
   const [profile, setProfile] = useState({ name: '', email: '', company: '' });
   const [securitySettings, setSecuritySettings] = useState({ twoFactorEnabled: false, sessionTimeout: '24h' });
   const [apiKeys, setApiKeys] = useState([]);
@@ -57,17 +57,17 @@ export function SettingsView() {
   const handleSaveProfile = async () => {
     try {
       const updatedUser = await apiService.updateUserProfile(profile);
-      setUser(prevUser => ({...prevUser, ...updatedUser}));
+      setUser(prevUser => ({ ...prevUser, ...updatedUser }));
       toast.success('Profile updated successfully');
     } catch (error) {
       toast.error(`Failed to update profile: ${error.message}`);
     }
   };
-  
+
   const handleUpdateSecuritySetting = async (setting, value) => {
     try {
       const updatedUser = await apiService.updateUserProfile({ [setting]: value });
-      setUser(prevUser => ({...prevUser, ...updatedUser}));
+      setUser(prevUser => ({ ...prevUser, ...updatedUser }));
       setSecuritySettings(prev => ({ ...prev, [setting]: value }));
       toast.success('Security setting updated');
     } catch (error) {
@@ -79,7 +79,13 @@ export function SettingsView() {
     try {
       const response = await apiService.generateApiKey({ name: 'New API Key' });
       const newKeyObject = { ...response.apiKey, id: response.apiKey._id };
-      
+
+      code
+      Code
+      download
+      content_copy
+      expand_less
+
       setApiKeys(current => [newKeyObject, ...current]);
 
       toast.success('API Key generated successfully!', {
@@ -94,17 +100,18 @@ export function SettingsView() {
         duration: 15000, // Increase duration so user has time to copy
       });
     } catch (error) {
-       toast.error(`Failed to generate API key: ${error.message}`);
+      toast.error(`Failed to generate API key: ${error.message}`);
     }
+
   };
-  
+
   const handleDeleteApiKey = async (keyId) => {
     try {
-        await apiService.deleteApiKey(keyId);
-        setApiKeys(current => current.filter(key => key.id !== keyId));
-        toast.success("API Key deleted.");
-    } catch(error) {
-        toast.error(`Failed to delete API key: ${error.message}`);
+      await apiService.deleteApiKey(keyId);
+      setApiKeys(current => current.filter(key => key.id !== keyId));
+      toast.success("API Key deleted.");
+    } catch (error) {
+      toast.error(`Failed to delete API key: ${error.message}`);
     }
   }
 
@@ -217,7 +224,7 @@ export function SettingsView() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteApiKey(apiKey.id)} className="text-destructive hover:text-destructive"><Trash size={16}/></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteApiKey(apiKey.id)} className="text-destructive hover:text-destructive"><Trash size={16} /></Button>
                       </div>
                     </div>
                     <div className="mt-3">

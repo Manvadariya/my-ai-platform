@@ -3,8 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+// --- START: CORRECTED IMPORTS ---
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { MultiSelect } from '@/components/ui/multi-select'; // <-- IMPORT THE NEW COMPONENT
+import { Slider } from '@/components/ui/slider';
+import { MultiSelect } from '@/components/ui/multi-select';
+// --- END: CORRECTED IMPORTS ---
 import { PaperPlaneTilt, Stop, Robot, User, Trash, Gear } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -18,8 +22,14 @@ export function PlaygroundView() {
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   
-  // This state now holds an ARRAY of selected ragDocumentIds
   const [selectedRagDocumentIds, setSelectedRagDocumentIds] = useState([]); 
+  
+  const [modelConfig, setModelConfig] = useState({
+    model: 'gpt-4o',
+    temperature: 0.7,
+    maxTokens: 2048,
+    systemPrompt: 'You are a helpful AI assistant.'
+  });
   
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -33,7 +43,6 @@ export function PlaygroundView() {
     [dataSources]
   );
   
-  // Format the sources for the MultiSelect component
   const multiSelectOptions = useMemo(() => 
     readyDataSources.map(ds => ({
       value: ds.ragDocumentId,
@@ -41,8 +50,7 @@ export function PlaygroundView() {
     })),
     [readyDataSources]
   );
-  
-  // If any selected documents are deleted, remove them from the selection
+
   useEffect(() => {
     const availableIds = new Set(readyDataSources.map(ds => ds.ragDocumentId));
     const newSelectedIds = selectedRagDocumentIds.filter(id => availableIds.has(id));
@@ -53,8 +61,6 @@ export function PlaygroundView() {
 
   const sendMessage = async () => {
     if (!currentMessage.trim() || isTyping) return;
-    
-    // Check if at least one document is selected
     if (selectedRagDocumentIds.length === 0) {
       toast.error("Please select at least one Knowledge Base source to chat with.");
       return;
@@ -64,16 +70,25 @@ export function PlaygroundView() {
     
     const newMessages = [...messages, userMessage];
     setPlaygroundMessages(newMessages);
+
     const question = currentMessage.trim();
     setCurrentMessage('');
     setIsTyping(true);
 
     try {
+      const historyToInclude = newMessages.slice(0, -1).slice(-6);
+      const formattedHistory = historyToInclude.map(msg => ({
+        type: msg.type,
+        content: msg.content
+      }));
+
       const chatData = {
         question: question,
-        documentIds: selectedRagDocumentIds, // Pass the array of selected IDs
+        documentIds: selectedRagDocumentIds,
+        systemPrompt: modelConfig.systemPrompt,
+        history: formattedHistory,
       };
-
+      
       const response = await apiService.sendMessageToRAG(chatData);
       
       const assistantMessage = {
@@ -110,20 +125,39 @@ export function PlaygroundView() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="dataSource">Knowledge Base</Label>
-              {/* --- REPLACE <Select> WITH <MultiSelect> --- */}
               <MultiSelect
                 options={multiSelectOptions}
                 selected={selectedRagDocumentIds}
                 onChange={setSelectedRagDocumentIds}
                 className="w-full"
               />
-              <p className="text-xs text-muted-foreground pt-1">
-                Select one or more documents to provide context for your chat.
-              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="model">Model</Label>
+              <Select value={modelConfig.model} onValueChange={(value) => setModelConfig(prev => ({ ...prev, model: value }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                  <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="temperature">Temperature: {modelConfig.temperature}</Label>
+              <Slider value={[modelConfig.temperature]} onValueChange={([value]) => setModelConfig(prev => ({ ...prev, temperature: value }))} max={2} min={0} step={0.1} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="systemPrompt">System Prompt</Label>
+              <Textarea
+                id="systemPrompt"
+                placeholder="e.g., You are a helpful pirate assistant who speaks in pirate slang."
+                value={modelConfig.systemPrompt}
+                onChange={(e) => setModelConfig(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                className="min-h-[120px] resize-y"
+              />
             </div>
           </CardContent>
         </Card>
-
         <Card className="lg:col-span-3 flex flex-col">
           <CardContent className="flex-1 flex flex-col p-0">
             <ScrollArea className="flex-1 px-6"><div className="space-y-4 pb-4">
@@ -172,4 +206,4 @@ export function PlaygroundView() {
       </div>
     </div>
   );
-}
+} 
