@@ -37,9 +37,10 @@ export const apiService = {
 
   // API Keys
   getApiKeys: () => request('/keys'),
+  // The body of generateApiKey now includes name and projectId
   generateApiKey: (keyData) => request('/keys', { method: 'POST', body: JSON.stringify(keyData) }),
   deleteApiKey: (id) => request(`/keys/${id}`, { method: 'DELETE' }),
-
+  
   // Billing
   getSubscription: () => request('/billing/subscription'),
   updateSubscription: (planData) => request('/billing/subscription', { method: 'PUT', body: JSON.stringify(planData) }),

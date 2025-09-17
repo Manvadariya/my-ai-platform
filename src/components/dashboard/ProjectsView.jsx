@@ -9,11 +9,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { MultiSelect } from '@/components/ui/multi-select';
-import { Plus, Rocket, Clock, CheckCircle, Code, Brain, DotsThree, Trash, PencilSimple, Folder, Eye } from '@phosphor-icons/react';
+import { Plus, Rocket, Clock, CheckCircle, Code, Brain, Trash, PencilSimple, Folder, Eye, Link as LinkIcon } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useAppContext } from '../../context/AppContext';
 import { apiService } from '../../lib/apiService';
+import { useNavigate } from 'react-router-dom';
 
 const DEFAULT_PROJECT_FORM = {
   name: '',
@@ -26,11 +27,12 @@ const DEFAULT_PROJECT_FORM = {
 
 export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
   const { projects, setProjects, dataSources } = useAppContext();
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create');
+  const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
   const [isDeployDialogOpen, setIsDeployDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [newProjectForm, setNewProjectForm] = useState(DEFAULT_PROJECT_FORM);
+  const [projectForm, setProjectForm] = useState(DEFAULT_PROJECT_FORM);
   const [isLoading, setIsLoading] = useState(false);
 
   const readyDataSources = useMemo(() => dataSources.filter(ds => ds.status === 'ready'), [dataSources]);
@@ -52,14 +54,15 @@ export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
 
   const handleOpenCreateDialog = () => {
     setModalMode('create');
-    setNewProjectForm(DEFAULT_PROJECT_FORM);
+    setProjectForm(DEFAULT_PROJECT_FORM);
+    setSelectedProject(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEditDialog = (project) => {
     setModalMode('edit');
     setSelectedProject(project);
-    setNewProjectForm({
+    setProjectForm({
       name: project.name,
       description: project.description,
       model: project.model,
@@ -71,20 +74,14 @@ export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
   };
 
   const handleFormSubmit = async () => {
-    if (!newProjectForm.name.trim()) {
+    if (!projectForm.name.trim()) {
       toast.error("Project name is required.");
       return;
     }
     setIsLoading(true);
     const apiCall = modalMode === 'create'
-      ? apiService.createProject(newProjectForm)
-      : apiService.updateProject(selectedProject.id, newProjectForm);
-
-    code
-    Code
-    download
-    content_copy
-    expand_less
+      ? apiService.createProject(projectForm)
+      : apiService.updateProject(selectedProject.id, projectForm);
 
     try {
       const result = await apiCall;
@@ -101,7 +98,6 @@ export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
     } finally {
       setIsLoading(false);
     }
-
   };
 
   const handleDeleteProject = async (projectId) => {
@@ -139,8 +135,8 @@ export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
   };
 
   const handleViewAPI = (project) => {
-    const apiEndpoint = `This feature is not yet implemented, but the endpoint for "${project.name}" would be available here.`;
-    toast.info("API Endpoint Info", { description: apiEndpoint });
+    navigate(`/settings?tab=api`);
+    toast.info(`Showing API keys for your projects.`);
   };
 
   const getStatusConfig = (status) => {
@@ -163,16 +159,50 @@ export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
         <div><h2 className="text-3xl font-bold tracking-tight">Projects</h2><p className="text-muted-foreground">Manage your AI models and deployments</p></div>
         <Button className="gap-2" onClick={handleOpenCreateDialog}><Plus size={16} />New Project</Button>
       </div>
-
-      code
-      Code
-      download
-      content_copy
-      expand_less
-      IGNORE_WHEN_COPYING_START
-      IGNORE_WHEN_COPYING_END
+      
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        {/* ... Dialog for Create/Edit remains the same ... */}
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{modalMode === 'create' ? 'Create New Project' : 'Edit Project'}</DialogTitle>
+            <DialogDescription>{modalMode === 'create' ? 'Configure and save your custom AI assistant.' : 'Update your project configuration.'}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="project-name">Project Name</Label>
+                <Input id="project-name" placeholder="Customer Support Bot" value={projectForm.name} onChange={(e) => setProjectForm(prev => ({ ...prev, name: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="base-model">Base Model</Label>
+                <Select value={projectForm.model} onValueChange={(value) => setProjectForm(prev => ({ ...prev, model: value }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="gpt-4o">GPT-4O (Recommended)</SelectItem><SelectItem value="gpt-4o-mini">GPT-4O Mini</SelectItem></SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="project-description">Description</Label>
+              <Textarea id="project-description" placeholder="A brief description of what this assistant does." value={projectForm.description} onChange={(e) => setProjectForm(prev => ({ ...prev, description: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="knowledge-base">Knowledge Base</Label>
+              <MultiSelect options={dataSourceOptions} selected={projectForm.documents} onChange={(selected) => setProjectForm(prev => ({ ...prev, documents: selected }))} />
+              <p className="text-xs text-muted-foreground">Select documents to ground the AI's responses.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>System Prompt</Label>
+              <Textarea placeholder="Define the AI's personality and instructions..." value={projectForm.systemPrompt} onChange={(e) => setProjectForm(prev => ({...prev, systemPrompt: e.target.value}))} className="min-h-[100px]"/>
+            </div>
+            <div className="space-y-2">
+              <Label>Temperature: {projectForm.temperature}</Label>
+              <Slider value={[projectForm.temperature]} onValueChange={([value]) => setProjectForm(prev => ({ ...prev, temperature: value }))} max={2} min={0} step={0.1} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleFormSubmit} disabled={isLoading}>{isLoading ? 'Saving...' : 'Save Project'}</Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       <Dialog open={isDeployDialogOpen} onOpenChange={setIsDeployDialogOpen}>
@@ -190,7 +220,7 @@ export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-muted-foreground">Total Projects</p><p className="text-2xl font-bold">{totalProjects}</p></div><Brain size={24} className="text-primary" weight="duotone" /></div></CardContent></Card>
         <Card><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-muted-foreground">Deployed</p><p className="text-2xl font-bold text-green-600">{deployedProjects}</p></div><Rocket size={24} className="text-green-600" weight="duotone" /></div></CardContent></Card>
@@ -240,27 +270,25 @@ export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
                         </div>
                       </div>
                     )}
-                    {/* --- START: BUTTON GROUP CHANGE --- */}
                     <div className="flex gap-2 pt-4 mt-auto">
                       <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleOpenEditDialog(project)}>
                         <PencilSimple size={14} />Edit
                       </Button>
-
+                      
                       {project.status === 'deployed' ? (
                         <Button variant="secondary" size="sm" className="flex-1 gap-1" onClick={() => handleViewAPI(project)}>
-                          <Eye size={14} />View API
+                           <LinkIcon size={14} />View API Keys
                         </Button>
                       ) : (
                         <Button size="sm" className="flex-1 gap-1 bg-green-600 hover:bg-green-700" onClick={() => handleOpenDeployDialog(project)}>
                           <Rocket size={14} />Deploy
                         </Button>
                       )}
-
+                      
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteProject(project.id)} className="text-destructive hover:text-destructive px-2">
                         <Trash size={14} />
                       </Button>
                     </div>
-                    {/* --- END: BUTTON GROUP CHANGE --- */}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -269,6 +297,5 @@ export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
         </div>
       )}
     </div>
-
   );
 }
