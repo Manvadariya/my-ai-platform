@@ -53,6 +53,9 @@ export const apiService = {
   // Chat (RAG)
   sendMessageToRAG: (chatData) => request('/chat', { method: 'POST', body: JSON.stringify(chatData) }), // Corrected Endpoint
   
+  // Analytics
+  getAnalytics: (range = '7d') => request(`/analytics?range=${range}`),
+
   // --- NEW: User Profile ---
   getProfile: () => request('/users/profile'), 
 
