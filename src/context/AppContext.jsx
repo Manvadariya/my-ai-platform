@@ -15,7 +15,6 @@ export const AppProvider = ({ children }) => {
   // All other states initialized as empty
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [projects, setProjects] = useState([]);
-  const [teamMembers, setTeamMembers] = useState([]);
   const [dataSources, setDataSources] = useState([]);
   const [playgroundMessages, setPlaygroundMessages] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -80,7 +79,6 @@ export const AppProvider = ({ children }) => {
     localStorage.removeItem('authToken');
     // Reset all states to prevent data from a previous session from flashing
     setProjects([]);
-    setTeamMembers([]);
     setDataSources([]);
     setPlaygroundMessages([]);
     setNotifications([]);
@@ -95,7 +93,6 @@ export const AppProvider = ({ children }) => {
     handleLogout,
     sidebarCollapsed, setSidebarCollapsed,
     projects, setProjects,
-    teamMembers, setTeamMembers,
     dataSources, setDataSources,
     playgroundMessages, setPlaygroundMessages,
     notifications, setNotifications,

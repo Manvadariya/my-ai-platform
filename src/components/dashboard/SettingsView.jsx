@@ -6,12 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { BillingView } from './BillingView';
-import { User, Shield, Key, CreditCard, Lock, Copy, Trash } from '@phosphor-icons/react';
+import { User, Shield, Key, Copy, Trash } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useAppContext } from '../../context/AppContext';
@@ -24,7 +22,7 @@ export function SettingsView() {
   
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
   const [profile, setProfile] = useState({ name: '', email: '', company: '' });
-  const [securitySettings, setSecuritySettings] = useState({ twoFactorEnabled: false, sessionTimeout: '24h' });
+  const [securitySettings, setSecuritySettings] = useState({ sessionTimeout: '8h' });
   const [apiKeys, setApiKeys] = useState([]);
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [newKeyData, setNewKeyData] = useState({ name: '', projectId: '' });
@@ -35,7 +33,9 @@ export function SettingsView() {
     if (isInitializing) return;
     if (user) {
       setProfile({ name: user.name, email: user.email, company: user.company });
-      setSecuritySettings({ twoFactorEnabled: user.twoFactorEnabled, sessionTimeout: user.sessionTimeout });
+      setSecuritySettings({ 
+        sessionTimeout: user.sessionTimeout || '8h'
+      });
     }
   }, [isInitializing, user]);
 
@@ -128,28 +128,21 @@ export function SettingsView() {
     <div className="space-y-6">
       <div><h2 className="text-3xl font-bold tracking-tight">Settings</h2><p className="text-muted-foreground">Manage your account preferences and security settings</p></div>
       <Tabs value={activeTab} onValueChange={(tab) => { setActiveTab(tab); setSearchParams({ tab }); }} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile" className="gap-2"><User size={16} />Profile</TabsTrigger>
           <TabsTrigger value="security" className="gap-2"><Shield size={16} />Security</TabsTrigger>
           <TabsTrigger value="api" className="gap-2"><Key size={16} />API Keys</TabsTrigger>
-          <TabsTrigger value="billing" className="gap-2"><CreditCard size={16} />Billing</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile" className="space-y-4">
           <Card>
             <CardHeader><CardTitle>Profile Information</CardTitle><CardDescription>Update your account profile and preferences</CardDescription></CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center gap-6">
-                <Avatar className="w-20 h-20"><AvatarImage src={user.avatar} /><AvatarFallback className="text-lg">{user.name.split(' ').map((n) => n[0]).join('')}</AvatarFallback></Avatar>
-                <div><Button variant="outline" size="sm">Change Avatar</Button><p className="text-sm text-muted-foreground mt-2">JPG, PNG or GIF. Max size 2MB.</p></div>
-              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label htmlFor="name">Full Name</Label><Input id="name" value={profile.name} onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))} /></div>
                 <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={profile.email} onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))} /></div>
                 <div className="space-y-2"><Label htmlFor="company">Company</Label><Input id="company" value={profile.company} onChange={(e) => setProfile(prev => ({ ...prev, company: e.target.value }))} /></div>
-                <div className="space-y-2"><Label htmlFor="role">Role</Label><Input id="role" value={user.role} disabled /></div>
               </div>
-              <div className="space-y-2"><Label htmlFor="bio">Bio</Label><Textarea id="bio" placeholder="Tell us about yourself..." /></div>
               <Button onClick={handleSaveProfile}>Save Changes</Button>
             </CardContent>
           </Card>
@@ -159,10 +152,6 @@ export function SettingsView() {
           <Card>
             <CardHeader><CardTitle>Security Settings</CardTitle><CardDescription>Manage your account security and access</CardDescription></CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div><p className="font-medium">Two-Factor Authentication</p><p className="text-sm text-muted-foreground">Add an extra layer of security</p></div>
-                <div className="flex items-center gap-3"><Badge variant={securitySettings.twoFactorEnabled ? 'default' : 'secondary'}>{securitySettings.twoFactorEnabled ? 'Enabled' : 'Disabled'}</Badge><Switch checked={securitySettings.twoFactorEnabled} onCheckedChange={(checked) => handleUpdateSecuritySetting('twoFactorEnabled', checked)} /></div>
-              </div>
               <div className="space-y-2">
                 <Label>Session Timeout</Label>
                 <Select value={securitySettings.sessionTimeout} onValueChange={(value) => handleUpdateSecuritySetting('sessionTimeout', value)}>
@@ -170,7 +159,6 @@ export function SettingsView() {
                   <SelectContent><SelectItem value="1h">1 hour</SelectItem><SelectItem value="8h">8 hours</SelectItem><SelectItem value="24h">24 hours</SelectItem><SelectItem value="7d">7 days</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div className="pt-4 border-t"><Button variant="outline" className="gap-2" onClick={() => toast.info('Password change flow not implemented yet.')}><Lock size={16} />Change Password</Button></div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -207,8 +195,6 @@ export function SettingsView() {
             </CardContent>
           </Card>
         </TabsContent>
-        
-        <TabsContent value="billing"><BillingView user={user} /></TabsContent>
       </Tabs>
 
       <Dialog open={isKeyModalOpen} onOpenChange={setIsKeyModalOpen}>

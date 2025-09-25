@@ -136,8 +136,6 @@ export function DataView() {
           <p className="text-muted-foreground">Upload and manage data sources for your AI models</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" disabled><FileTxt size={16} />Add Text</Button>
-          <Button variant="outline" className="gap-2" disabled><Link size={16} />Scrape URL</Button>
           <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
             <DialogTrigger asChild><Button className="gap-2"><Upload size={16} />Upload Files</Button></DialogTrigger>
             <DialogContent className="sm:max-w-lg">
@@ -195,8 +193,6 @@ export function DataView() {
                         <TableCell>{new Date(dataSource.uploadedAt).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" disabled><Eye size={14} /></Button>
-                            <Button variant="ghost" size="sm" disabled><Download size={14} /></Button>
                             <Button variant="ghost" size="sm" onClick={() => handleDeleteDataSource(dataSource.id)} className="text-destructive hover:text-destructive"><Trash size={14} /></Button>
                           </div>
                         </TableCell>

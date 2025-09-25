@@ -13,7 +13,7 @@ import { apiService } from '../../lib/apiService'; // Ensure this path is correc
 export function AuthScreen({ onAuth }) {
   const [isLoading, setIsLoading] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
-  const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '', company: '', role: '' });
+  const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '', company: ''});
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -36,7 +36,7 @@ export function AuthScreen({ onAuth }) {
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (!signupForm.name || !signupForm.email || !signupForm.password || !signupForm.company || !signupForm.role) {
+    if (!signupForm.name || !signupForm.email || !signupForm.password || !signupForm.company) {
       toast.error("Please fill in all fields.");
       return;
     }
@@ -169,19 +169,6 @@ export function AuthScreen({ onAuth }) {
                             required
                             />
                         </div>
-                        </div>
-                        <div className="space-y-2">
-                        <Label htmlFor="signup-role">Role</Label>
-                        <Select value={signupForm.role} onValueChange={(value) => setSignupForm(prev => ({ ...prev, role: value }))}>
-                            <SelectTrigger className="h-11">
-                            <SelectValue placeholder="Select role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                            <SelectItem value="Admin">Admin</SelectItem>
-                            <SelectItem value="Developer">Developer</SelectItem>
-                            <SelectItem value="Editor">Editor</SelectItem>
-                            </SelectContent>
-                        </Select>
                         </div>
                     </div>
                     <div className="space-y-2">

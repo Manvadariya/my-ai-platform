@@ -41,10 +41,6 @@ export const apiService = {
   generateApiKey: (keyData) => request('/keys', { method: 'POST', body: JSON.stringify(keyData) }),
   deleteApiKey: (id) => request(`/keys/${id}`, { method: 'DELETE' }),
   
-  // Billing
-  getSubscription: () => request('/billing/subscription'),
-  updateSubscription: (planData) => request('/billing/subscription', { method: 'PUT', body: JSON.stringify(planData) }),
-
   // Data Sources (Knowledge Base)
   getDataSources: () => request('/data'),
   uploadFile: (formData) => request('/data/upload', { method: 'POST', body: formData }), // Corrected Endpoint

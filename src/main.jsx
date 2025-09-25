@@ -11,7 +11,6 @@ import App from './App.jsx';
 
 // Import all your view components that will become pages
 import { ProjectsView } from './components/dashboard/ProjectsView';
-import { TeamView } from './components/dashboard/TeamView';
 import { AnalyticsView } from './components/dashboard/AnalyticsView';
 import { SettingsView } from './components/dashboard/SettingsView';
 import { PlaygroundView } from './components/dashboard/PlaygroundView';
@@ -27,7 +26,6 @@ const router = createBrowserRouter([
       { path: "projects", element: <ProjectsView /> },
       { path: "playground", element: <PlaygroundView /> },
       { path: "data", element: <DataView /> },
-      { path: "team", element: <TeamView /> },
       { path: "analytics", element: <AnalyticsView /> },
       { path: "settings", element: <SettingsView /> },
     ]

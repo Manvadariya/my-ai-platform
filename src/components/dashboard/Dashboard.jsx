@@ -3,20 +3,18 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'; // IMPORT ROU
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 // --- CORRECTED ICON IMPORTS ---
 import {
   Brain,
-  FolderOpen,
+  FolderOpenIcon,
   Users,
-  ChartBar,
-  Gear,
+  ChartBarIcon,
+  GearIcon,
   SignOut,
   Plus,
-  Bell,
   MagnifyingGlass,
-  ChatCircle,
-  Database,
+  ChatCircleIcon,
+  DatabaseIcon,
   List
 } from '@phosphor-icons/react';
 import { Input } from '@/components/ui/input';
@@ -45,7 +43,6 @@ export function Dashboard({ user, onLogout, children }) {
     sidebarCollapsed,
     setSidebarCollapsed,
     projects,
-    teamMembers,
     dataSources,
     playgroundMessages,
     notifications,
@@ -105,25 +102,6 @@ export function Dashboard({ user, onLogout, children }) {
       }
     });
 
-    teamMembers.forEach((member) => {
-      if (
-        member.name.toLowerCase().includes(query.toLowerCase()) ||
-        member.email.toLowerCase().includes(query.toLowerCase()) ||
-        member.role.toLowerCase().includes(query.toLowerCase())
-      ) {
-        results.push({
-          type: 'team',
-          title: member.name,
-          description: `${member.role} • ${member.email}`,
-          icon: '👤',
-          action: () => {
-            navigate('/team');
-            sessionStorage.setItem('highlightMemberId', member.id);
-          }
-        });
-      }
-    });
-
     dataSources.forEach((file) => {
       if (
         file.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -161,9 +139,7 @@ export function Dashboard({ user, onLogout, children }) {
     const settingsItems = [
       { title: 'API Keys', description: 'Manage your API credentials', section: 'api' },
       { title: 'Profile Settings', description: 'Update your account information', section: 'profile' },
-      { title: 'Billing', description: 'Manage subscription and billing', section: 'billing' },
       { title: 'Usage Analytics', description: 'View API usage and analytics', section: 'analytics' },
-      { title: 'Team Management', description: 'Invite and manage team members', section: 'team' },
     ];
 
     settingsItems.forEach(item => {
@@ -177,7 +153,7 @@ export function Dashboard({ user, onLogout, children }) {
           description: item.description,
           icon: '⚙️',
           action: () => {
-            if (item.section === 'analytics' || item.section === 'team') {
+            if (item.section === 'analytics') {
               navigate(`/${item.section}`);
             } else {
               navigate('/settings');
@@ -194,12 +170,11 @@ export function Dashboard({ user, onLogout, children }) {
 
   // Add a `path` property to each navigation item for routing
   const navigationItems = [
-    { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/projects' },
-    { id: 'playground', label: 'Playground', icon: ChatCircle, path: '/playground' },
-    { id: 'data', label: 'Knowledge Base', icon: Database, path: '/data' },
-    { id: 'team', label: 'Team', icon: Users, path: '/team' },
-    { id: 'analytics', label: 'Analytics', icon: ChartBar, path: '/analytics' },
-    { id: 'settings', label: 'Settings', icon: Gear, path: '/settings' }
+    { id: 'projects', label: 'Projects', icon: FolderOpenIcon, path: '/projects' },
+    { id: 'playground', label: 'Playground', icon: ChatCircleIcon, path: '/playground' },
+    { id: 'data', label: 'Knowledge Base', icon: DatabaseIcon, path: '/data' },
+    { id: 'analytics', label: 'Analytics', icon: ChartBarIcon, path: '/analytics' },
+    { id: 'settings', label: 'Settings', icon: GearIcon, path: '/settings' }
   ];
 
   return (
@@ -220,7 +195,7 @@ export function Dashboard({ user, onLogout, children }) {
                   <MagnifyingGlass size={18} className="text-muted-foreground" />
                 </div>
                 <Input
-                  placeholder="Search projects, team members... (Ctrl+K)"
+                  placeholder="Search projects, APIs... (Ctrl+K)"
                   className="pl-10 pr-4 h-10 bg-background/50 border-border/50 backdrop-blur-sm focus:bg-background focus:border-primary/50 transition-all duration-200"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
@@ -237,7 +212,7 @@ export function Dashboard({ user, onLogout, children }) {
               </div>
               
               {showSearchResults && (
-                <Card className="absolute top-full left-0 right-0 mt-2 z-50 border shadow-xl backdrop-blur-sm bg-card/95">
+                <Card className="absolute top-full left-0 right-0 mt-2 z-50 border shadow-xl back backdrop-blur-sm bg-card/95">
                   <CardContent className="p-2">
                     {searchResults.length === 0 ? (
                       <div className="p-6 text-center text-muted-foreground">
@@ -289,9 +264,6 @@ export function Dashboard({ user, onLogout, children }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="relative h-10 w-10 rounded-lg hover:bg-accent/50 transition-colors">
-                  <div className="flex items-center justify-center">
-                    <Bell size={20} />
-                  </div>
                   {notifications.filter(n => !n.read).length > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-xs text-white rounded-full flex items-center justify-center font-medium border-2 border-background">
                       {notifications.filter(n => !n.read).length}
@@ -358,15 +330,11 @@ export function Dashboard({ user, onLogout, children }) {
                       <p className="text-sm font-medium">{user.name}</p>
                       <p className="text-xs text-muted-foreground">{user.company}</p>
                     </div>
-                    <Avatar className="w-9 h-9 border-2 border-background shadow-sm">
-                      <AvatarImage src={user.avatar} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-medium">{user.name.split(' ').map((n) => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => navigate('/settings')} className="flex items-center">
-                    <div className="flex items-center justify-center w-4 mr-3"><Gear size={16} /></div>
+                    <div className="flex items-center justify-center w-4 mr-3"><GearIcon size={16} /></div>
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -408,8 +376,7 @@ export function Dashboard({ user, onLogout, children }) {
                     whileTap={{ scale: 0.98 }}
                   >
                     <Button
-                      as={Link}       // Use React Router's Link
-                      to={item.path}  // Set the navigation path
+                      onClick={() => navigate(item.path)}
                       variant={isActive ? "secondary" : "ghost"}
                       className={`w-full h-11 ${sidebarCollapsed ? 'justify-center px-0' : 'justify-start gap-3 px-3'} ${isActive ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm' : 'hover:bg-accent/50'} transition-all duration-200 relative group`}
                       title={sidebarCollapsed ? item.label : undefined}
