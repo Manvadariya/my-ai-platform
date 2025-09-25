@@ -135,7 +135,7 @@ export function ProjectsView({ triggerNewProject, onNewProjectTriggered }) {
   };
 
   const handleViewAPI = (project) => {
-    navigate(`/settings?tab=api`);
+    navigate(`/app/settings?tab=api`);
     toast.info(`Showing API keys for your projects.`);
   };
 

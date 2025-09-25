@@ -5,7 +5,6 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { Toaster } from './components/ui/sonner';
 import { useAppContext } from './context/AppContext';
 
-// A simple component to show while verifying the user's session
 function LoadingSpinner() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -19,29 +18,35 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // This effect runs only ONCE when the app starts
   useEffect(() => {
     loadUserFromToken();
   }, [loadUserFromToken]);
 
-  // This effect handles redirects AFTER the initial loading is done
   useEffect(() => {
-    if (isInitializing) return; // Do nothing until we know if user is logged in or not
+    if (isInitializing) return;
 
-    if (user && location.pathname === '/') {
-      navigate('/projects');
-    } else if (!user && location.pathname !== '/') {
+    // --- START: UPDATED REDIRECT LOGIC ---
+    // If the user is logged in and they are somehow at the base '/app' path,
+    // redirect them to the default dashboard page.
+    if (user && location.pathname === '/app') {
+      navigate('/app/projects');
+    } 
+    // If the user is NOT logged in and they try to access any '/app/*' route,
+    // redirect them back to the main landing page to sign in.
+    else if (!user && location.pathname.startsWith('/app')) {
       navigate('/');
     }
+    // --- END: UPDATED REDIRECT LOGIC ---
+
   }, [user, isInitializing, navigate, location.pathname]);
 
-  // Show a loading screen while we verify the token
   if (isInitializing) {
     return <LoadingSpinner />;
   }
 
-  // If loading is finished and there's still no user, show the AuthScreen
   if (!user) {
+    // If not logged in, AuthScreen is the component to render for the '/app' route.
+    // The router knows to show this component when the path is '/app' and there's no user.
     return (
       <>
         <AuthScreen onAuth={handleAuth} />
@@ -50,7 +55,6 @@ function App() {
     );
   }
   
-  // If loading is finished and we have a user, show the Dashboard
   return (
     <>
       <Dashboard user={user} onLogout={handleLogout}>

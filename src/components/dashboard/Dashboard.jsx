@@ -95,7 +95,7 @@ export function Dashboard({ user, onLogout, children }) {
           description: `${project.description} • ${project.status}`,
           icon: '🚀',
           action: () => {
-            navigate('/projects');
+            navigate('/app/projects');
             sessionStorage.setItem('highlightProjectId', project.id);
           }
         });
@@ -113,7 +113,7 @@ export function Dashboard({ user, onLogout, children }) {
           description: `${file.format} • ${file.size}`,
           icon: '📄',
           action: () => {
-            navigate('/data');
+            navigate('/app/data');
             sessionStorage.setItem('highlightFileId', file.id);
           }
         });
@@ -131,7 +131,7 @@ export function Dashboard({ user, onLogout, children }) {
           title: 'Playground Chat',
           description: `${playgroundMessages.length} messages • Contains "${query}"`,
           icon: '💬',
-          action: () => navigate('/playground')
+          action: () => navigate('/app/playground')
         });
       }
     }
@@ -154,9 +154,9 @@ export function Dashboard({ user, onLogout, children }) {
           icon: '⚙️',
           action: () => {
             if (item.section === 'analytics') {
-              navigate(`/${item.section}`);
+              navigate(`/app/${item.section}`);
             } else {
-              navigate('/settings');
+              navigate('/app/settings');
             }
             sessionStorage.setItem('highlightSection', item.section);
           }
@@ -170,11 +170,11 @@ export function Dashboard({ user, onLogout, children }) {
 
   // Add a `path` property to each navigation item for routing
   const navigationItems = [
-    { id: 'projects', label: 'Projects', icon: FolderOpenIcon, path: '/projects' },
-    { id: 'playground', label: 'Playground', icon: ChatCircleIcon, path: '/playground' },
-    { id: 'data', label: 'Knowledge Base', icon: DatabaseIcon, path: '/data' },
-    { id: 'analytics', label: 'Analytics', icon: ChartBarIcon, path: '/analytics' },
-    { id: 'settings', label: 'Settings', icon: GearIcon, path: '/settings' }
+    { id: 'projects', label: 'Projects', icon: FolderOpenIcon, path: 'projects' },
+    { id: 'playground', label: 'Playground', icon: ChatCircleIcon, path: 'playground' },
+    { id: 'data', label: 'Knowledge Base', icon: DatabaseIcon, path: 'data' },
+    { id: 'analytics', label: 'Analytics', icon: ChartBarIcon, path: 'analytics' },
+    { id: 'settings', label: 'Settings', icon: GearIcon, path: 'settings' }
   ];
 
   return (
@@ -196,7 +196,7 @@ export function Dashboard({ user, onLogout, children }) {
                 </div>
                 <Input
                   placeholder="Search projects, APIs... (Ctrl+K)"
-                  className="pl-10 pr-4 h-10 bg-background/50 border-border/50 backdrop-blur-sm focus:bg-background focus:border-primary/50 transition-all duration-200"
+                  className="pl-10 pr-4 h-10 bg-background/50 border-border/50 transition-all duration-200"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
                   onFocus={() => searchQuery && setShowSearchResults(true)}
@@ -212,7 +212,7 @@ export function Dashboard({ user, onLogout, children }) {
               </div>
               
               {showSearchResults && (
-                <Card className="absolute top-full left-0 right-0 mt-2 z-50 border shadow-xl back backdrop-blur-sm bg-card/95">
+                <Card className="absolute top-full left-0 right-0 mt-2 z-50 border">
                   <CardContent className="p-2">
                     {searchResults.length === 0 ? (
                       <div className="p-6 text-center text-muted-foreground">
@@ -333,7 +333,7 @@ export function Dashboard({ user, onLogout, children }) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => navigate('/settings')} className="flex items-center">
+                  <DropdownMenuItem onClick={() => navigate('/app/settings')} className="flex items-center">
                     <div className="flex items-center justify-center w-4 mr-3"><GearIcon size={16} /></div>
                     Settings
                   </DropdownMenuItem>
@@ -376,7 +376,7 @@ export function Dashboard({ user, onLogout, children }) {
                     whileTap={{ scale: 0.98 }}
                   >
                     <Button
-                      onClick={() => navigate(item.path)}
+                      onClick={() => navigate(`/app/${item.path}`)}
                       variant={isActive ? "secondary" : "ghost"}
                       className={`w-full h-11 ${sidebarCollapsed ? 'justify-center px-0' : 'justify-start gap-3 px-3'} ${isActive ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm' : 'hover:bg-accent/50'} transition-all duration-200 relative group`}
                       title={sidebarCollapsed ? item.label : undefined}
@@ -413,7 +413,7 @@ export function Dashboard({ user, onLogout, children }) {
                   <Button
                     className="w-full gap-3 bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 text-primary border border-primary/20 h-10 font-medium shadow-sm"
                     onClick={() => {
-                      navigate('/projects');
+                      navigate('/app/projects');
                       setTriggerNewProject(true);
                     }}
                   >
@@ -427,7 +427,7 @@ export function Dashboard({ user, onLogout, children }) {
                   <Button
                     className="w-full h-11 justify-center p-0 bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 text-primary border border-primary/20 shadow-sm"
                     onClick={() => {
-                      navigate('/projects');
+                      navigate('/app/projects');
                       setTriggerNewProject(true);
                     }}
                     title="New Project"

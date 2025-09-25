@@ -9,8 +9,10 @@ import { Brain, Buildings, Envelope, Lock, User, Sparkle } from '@phosphor-icons
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { apiService } from '../../lib/apiService'; // Ensure this path is correct
+import { useNavigate } from 'react-router-dom';
 
 export function AuthScreen({ onAuth }) {
+    const navigate = useNavigate(); 
   const [isLoading, setIsLoading] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '', company: ''});
@@ -25,8 +27,10 @@ export function AuthScreen({ onAuth }) {
     try {
       const response = await apiService.login(loginForm);
       localStorage.setItem('authToken', response.token);
-      onAuth(response.user);
       toast.success('Welcome back!');
+      console.log('Navigating to dashboard...');
+      
+      navigate('/app');
     } catch (error) {
       toast.error(error.message || "Login failed. Please check your credentials.");
     } finally {
